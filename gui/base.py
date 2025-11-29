@@ -3,29 +3,69 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from tkinter import filedialog, messagebox
 import os
+import json
 from datetime import datetime
 from utils.converter import convert_image
 from configure.settings import file_types, convert_loss
 
 class ImageConverterApp(ttk.Window):
     def __init__(self):
-        super().__init__(themename="litera")
+        self.settings_file = "user_settings.json"
+        self.settings = self._load_settings()
+        
+        super().__init__(themename=self.settings.get("theme", "litera"))
         self.title("图片转换神器")
-        self.geometry("700x500")
+        self.geometry("700x600") # Increased height
 
-        self.input_path = tk.StringVar()
-        self.output_path = tk.StringVar()
+        self.input_path = tk.StringVar(value=self.settings.get("default_input_path", ""))
+        self.output_path = tk.StringVar(value=self.settings.get("default_output_path", ""))
         self.output_format = tk.StringVar(value=file_types[0] if file_types else '')
         self.output_filename = tk.StringVar()
 
         self._create_widgets()
+        
+        if self.input_path.get():
+            base_name = os.path.splitext(os.path.basename(self.input_path.get()))[0]
+            self.output_filename.set(base_name)
+            self.after(100, self.show_loss_info)
+
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _load_settings(self):
+        try:
+            if os.path.exists(self.settings_file):
+                with open(self.settings_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except (IOError, json.JSONDecodeError):
+            pass
+        return {"default_input_path": "", "default_output_path": "", "theme": "litera"}
+
+    def _save_settings(self):
+        self.settings["theme"] = self.style.theme.name
+        try:
+            with open(self.settings_file, "w", encoding="utf-8") as f:
+                json.dump(self.settings, f, indent=4)
+        except IOError:
+            self.log_message("错误：无法保存设置。")
+
+    def _set_default_input_path(self):
+        path = self.input_path.get()
+        if path and os.path.isfile(path):
+            self.settings["default_input_path"] = path
+            self.log_message(f"默认输入文件已设置为: {path}")
+        else:
+            messagebox.showwarning("无效路径", "请先选择一个有效的输入文件。")
+
+    def _set_default_output_path(self):
+        path = self.output_path.get()
+        if path and os.path.isdir(path):
+            self.settings["default_output_path"] = path
+            self.log_message(f"默认输出目录已设置为: {path}")
+        else:
+            messagebox.showwarning("无效路径", "请先选择一个有效的输出目录。")
 
     def _toggle_theme(self):
-        current_theme = self.style.theme_use()
-        if current_theme == "litera":
-            self.style.theme_use("cyborg")
-        else:
-            self.style.theme_use("litera")
+        self.style.theme_use("cyborg" if self.style.theme.name == "litera" else "litera")
 
     def _create_widgets(self):
         main_frame = ttk.Frame(self, padding="15")
@@ -43,10 +83,12 @@ class ImageConverterApp(ttk.Window):
         ttk.Label(io_frame, text="输入文件:").grid(row=0, column=0, padx=(0, 10), pady=5, sticky="w")
         ttk.Entry(io_frame, textvariable=self.input_path).grid(row=0, column=1, sticky="ew")
         ttk.Button(io_frame, text="选择...", command=self.select_input_file, bootstyle="secondary-outline").grid(row=0, column=2, padx=(5, 0))
+        ttk.Button(io_frame, text="设为默认", command=self._set_default_input_path, bootstyle="info-outline").grid(row=0, column=3, padx=(5, 0))
 
         ttk.Label(io_frame, text="输出目录:").grid(row=1, column=0, padx=(0, 10), pady=5, sticky="w")
         ttk.Entry(io_frame, textvariable=self.output_path).grid(row=1, column=1, sticky="ew")
         ttk.Button(io_frame, text="选择...", command=self.select_output_dir, bootstyle="secondary-outline").grid(row=1, column=2, padx=(5, 0))
+        ttk.Button(io_frame, text="设为默认", command=self._set_default_output_path, bootstyle="info-outline").grid(row=1, column=3, padx=(5, 0))
 
         conv_frame = ttk.Labelframe(main_frame, text="转换操作", padding="15")
         conv_frame.pack(fill=X, pady=10)
@@ -65,13 +107,15 @@ class ImageConverterApp(ttk.Window):
         log_frame = ttk.Labelframe(main_frame, text="信息日志", padding="10")
         log_frame.pack(fill=BOTH, expand=YES, pady=10)
         
-        self.log_text = tk.Text(log_frame, height=6, relief="flat")
+        self.log_text = tk.Text(log_frame, height=15, relief="flat") # Increased height
         self.log_text.pack(fill=BOTH, expand=YES)
         self.log_text.config(state=tk.DISABLED)
 
     def select_input_file(self):
+        initial_dir = os.path.dirname(self.settings.get("default_input_path", "/"))
         path = filedialog.askopenfilename(
             title="选择图片文件",
+            initialdir=initial_dir if os.path.isdir(initial_dir) else "/",
             filetypes=[("Image Files", "*.jpg *.jpeg *.png"), ("All files", "*.*")]
         )
         if path:
@@ -84,15 +128,18 @@ class ImageConverterApp(ttk.Window):
             self.show_loss_info()
 
     def select_output_dir(self):
-        path = filedialog.askdirectory(title="选择输出目录")
+        initial_dir = self.settings.get("default_output_path", "")
+        path = filedialog.askdirectory(
+            title="选择输出目录",
+            initialdir=initial_dir if os.path.isdir(initial_dir) else "/"
+        )
         if path:
             self.output_path.set(path)
             self.log_message(f"已选择输出目录: {path}")
 
     def show_loss_info(self, event=None):
         input_p = self.input_path.get()
-        if not input_p:
-            return
+        if not input_p: return
         
         input_ext = os.path.splitext(input_p)[1].lower().replace('.', '')
         output_ext = self.output_format.get().lower()
@@ -130,12 +177,17 @@ class ImageConverterApp(ttk.Window):
 
     def log_message(self, message):
         self.log_text.config(state=tk.NORMAL)
+        self.log_text.delete("1.0", tk.END)
         self.log_text.insert(tk.END, f"[{self.get_timestamp()}] {message}\n\n")
         self.log_text.config(state=tk.DISABLED)
         self.log_text.see(tk.END)
 
     def get_timestamp(self):
         return datetime.now().strftime("%H:%M:%S")
+
+    def _on_close(self):
+        self._save_settings()
+        self.destroy()
 
 if __name__ == '__main__':
     app = ImageConverterApp()
