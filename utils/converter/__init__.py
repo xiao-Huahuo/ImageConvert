@@ -5,6 +5,9 @@ MODULE_MAPPING = {
     frozenset(['jpg', 'jpeg']): 'JPG__JPEG',
     frozenset(['jpg', 'png']): 'JPG__PNG',
     frozenset(['jpeg', 'png']): 'JPEG__PNG',
+    frozenset(['png', 'ico']): 'PNG__ICO',
+    frozenset(['jpg', 'ico']): 'JPG__ICO',
+    frozenset(['jpeg', 'ico']): 'JPEG__ICO',
 }
 
 def convert_image(input_path, output_path, output_format, output_filename):
@@ -18,7 +21,6 @@ def convert_image(input_path, output_path, output_format, output_filename):
     output_ext = output_format.lower()
 
     if input_ext == output_ext:
-        # 如果文件名也相同，则无需转换
         base_name_input = os.path.splitext(os.path.basename(input_path))[0]
         if base_name_input == output_filename:
             return "输入和输出格式及文件名均相同，无需转换。"
@@ -38,7 +40,6 @@ def convert_image(input_path, output_path, output_format, output_filename):
         converter_module = importlib.import_module(f".{module_name}", package="utils.converter")
         convert_func = getattr(converter_module, function_name)
         
-        # 使用用户指定的文件名构建输出路径
         full_output_path = os.path.join(output_path, f"{output_filename}.{output_ext}")
 
         return convert_func(input_path, full_output_path)

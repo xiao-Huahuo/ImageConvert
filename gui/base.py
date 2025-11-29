@@ -15,7 +15,7 @@ class ImageConverterApp(ttk.Window):
         
         super().__init__(themename=self.settings.get("theme", "litera"))
         self.title("图片转换神器")
-        self.geometry("700x600") # Increased height
+        self.geometry("700x600")
 
         self.input_path = tk.StringVar(value=self.settings.get("default_input_path", ""))
         self.output_path = tk.StringVar(value=self.settings.get("default_output_path", ""))
@@ -107,7 +107,7 @@ class ImageConverterApp(ttk.Window):
         log_frame = ttk.Labelframe(main_frame, text="信息日志", padding="10")
         log_frame.pack(fill=BOTH, expand=YES, pady=10)
         
-        self.log_text = tk.Text(log_frame, height=15, relief="flat") # Increased height
+        self.log_text = tk.Text(log_frame, height=15, relief="flat")
         self.log_text.pack(fill=BOTH, expand=YES)
         self.log_text.config(state=tk.DISABLED)
 
@@ -116,7 +116,7 @@ class ImageConverterApp(ttk.Window):
         path = filedialog.askopenfilename(
             title="选择图片文件",
             initialdir=initial_dir if os.path.isdir(initial_dir) else "/",
-            filetypes=[("Image Files", "*.jpg *.jpeg *.png"), ("All files", "*.*")]
+            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.ico"), ("All files", "*.*")]
         )
         if path:
             self.input_path.set(path)
