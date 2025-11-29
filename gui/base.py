@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 from utils.converter import convert_image
 from configure.settings import file_types, convert_loss
+from gui.ico_checker_window import IcoCheckerWindow
 
 class ImageConverterApp(ttk.Window):
     def __init__(self):
@@ -21,7 +22,9 @@ class ImageConverterApp(ttk.Window):
         self.output_path = tk.StringVar(value=self.settings.get("default_output_path", ""))
         self.output_format = tk.StringVar(value=file_types[0] if file_types else '')
         self.output_filename = tk.StringVar()
+        self.ico_checker_window = None
 
+        self._create_menu()
         self._create_widgets()
         
         if self.input_path.get():
@@ -30,6 +33,22 @@ class ImageConverterApp(ttk.Window):
             self.after(100, self.show_loss_info)
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _create_menu(self):
+        menubar = ttk.Menu(self)
+        self.config(menu=menubar)
+        
+        tools_menu = ttk.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="工具", menu=tools_menu)
+        tools_menu.add_command(label="ICO 分辨率检测", command=self._open_ico_checker)
+
+    def _open_ico_checker(self):
+        if self.ico_checker_window and self.ico_checker_window.winfo_exists():
+            self.ico_checker_window.deiconify()
+            self.ico_checker_window.lift()
+            self.ico_checker_window.focus_set()
+        else:
+            self.ico_checker_window = IcoCheckerWindow(self)
 
     def _load_settings(self):
         try:
