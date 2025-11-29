@@ -8,6 +8,36 @@ MODULE_MAPPING = {
     frozenset(['png', 'ico']): 'PNG__ICO',
     frozenset(['jpg', 'ico']): 'JPG__ICO',
     frozenset(['jpeg', 'ico']): 'JPEG__ICO',
+    frozenset(['png', 'bmp']): 'PNG__BMP',
+    frozenset(['jpg', 'bmp']): 'JPG__BMP',
+    frozenset(['jpeg', 'bmp']): 'JPG__BMP',
+    frozenset(['png', 'webp']): 'PNG__WEBP',
+    frozenset(['jpg', 'webp']): 'JPG__WEBP',
+    frozenset(['jpeg', 'webp']): 'JPG__WEBP',
+    frozenset(['png', 'gif']): 'PNG__GIF',
+    frozenset(['jpg', 'gif']): 'JPG__GIF',
+    frozenset(['jpeg', 'gif']): 'JPG__GIF',
+    frozenset(['png', 'heic']): 'PNG__HEIC',
+    frozenset(['jpg', 'heic']): 'JPG__HEIC',
+    frozenset(['jpeg', 'heic']): 'JPG__HEIC',
+    frozenset(['png', 'svg']): 'PNG__SVG',
+    frozenset(['jpg', 'svg']): 'JPG__SVG',
+    frozenset(['jpeg', 'svg']): 'JPG__SVG',
+    frozenset(['ico', 'bmp']): 'ICO__BMP',
+    frozenset(['ico', 'webp']): 'ICO__WEBP',
+    frozenset(['ico', 'gif']): 'ICO__GIF',
+    frozenset(['ico', 'heic']): 'ICO__HEIC',
+    frozenset(['ico', 'svg']): 'ICO__SVG',
+    frozenset(['bmp', 'webp']): 'BMP__WEBP',
+    frozenset(['bmp', 'gif']): 'BMP__GIF',
+    frozenset(['bmp', 'heic']): 'BMP__HEIC',
+    frozenset(['bmp', 'svg']): 'BMP__SVG',
+    frozenset(['webp', 'gif']): 'WEBP__GIF',
+    frozenset(['webp', 'heic']): 'WEBP__HEIC',
+    frozenset(['webp', 'svg']): 'WEBP__SVG',
+    frozenset(['gif', 'heic']): 'GIF__HEIC',
+    frozenset(['gif', 'svg']): 'GIF__SVG',
+    frozenset(['heic', 'svg']): 'HEIC__SVG',
 }
 
 def convert_image(input_path, output_path, output_format, output_filename):
@@ -29,10 +59,14 @@ def convert_image(input_path, output_path, output_format, output_filename):
     module_name = MODULE_MAPPING.get(key)
 
     if not module_name:
+        reversed_key = frozenset([output_ext, input_ext])
+        module_name = MODULE_MAPPING.get(reversed_key)
+
+    if not module_name:
         if input_ext in ('jpg', 'jpeg') and output_ext in ('jpg', 'jpeg'):
              module_name = 'JPG__JPEG'
         else:
-            return f"错误：不支持从 {input_ext} 到 {output_ext} 的转换。"
+            return f"错误：不支持从 {input_ext} 到 {output_ext} 的转换路径。"
 
     function_name = f"{input_ext}_to_{output_ext}"
 

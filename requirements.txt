@@ -1,0 +1,5 @@
+ttkbootstrap
+pyinstaller
+datetime
+pillow
+pillow-heif

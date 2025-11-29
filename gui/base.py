@@ -132,10 +132,13 @@ class ImageConverterApp(ttk.Window):
 
     def select_input_file(self):
         initial_dir = os.path.dirname(self.settings.get("default_input_path", "/"))
+        filetypes_list = [f"*.{ext}" for ext in file_types if ext != 'svg']
+        filetypes_str = " ".join(filetypes_list)
+        
         path = filedialog.askopenfilename(
             title="选择图片文件",
             initialdir=initial_dir if os.path.isdir(initial_dir) else "/",
-            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.ico"), ("All files", "*.*")]
+            filetypes=[("Image Files", filetypes_str), ("All files", "*.*")]
         )
         if path:
             self.input_path.set(path)
